@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="ur">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>AutoCAD 2D/3D Service Order App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+      button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) { min-height: 2.25rem; }
+
+      :root {
+        --bg: #eef3f8;
+        --bg-grid: rgba(23, 84, 148, 0.07);
+        --bg-grid-strong: rgba(23, 84, 148, 0.12);
+        --surface: #ffffff;
+        --surface-2: #e3ecf5;
+        --ink: #10222f;
+        --ink-soft: #43586a;
+        --line: #b9cbdd;
+        --line-strong: #7fa3c4;
+        --blue: #175494;
+        --blue-deep: #0e3a68;
+        --accent: #e07b12;
+        --accent-ink: #ffffff;
+        --ok: #1c7a3f;
+        --err: #b3261e;
+        --chip-bg: #ffffff;
+        --shadow: 0 10px 30px rgba(14, 58, 104, 0.12);
+        --radius: 10px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0a1a2c;
+          --bg-grid: rgba(140, 190, 240, 0.06);
+          --bg-grid-strong: rgba(140, 190, 240, 0.11);
+          --surface: #10283f;
+          --surface-2: #0d2136;
+          --ink: #e8f1f9;
+          --ink-soft: #a9bfd3;
+          --line: #2c4d6e;
+          --line-strong: #4f7ba6;
+          --blue: #4f97dd;
+          --blue-deep: #9cc4ec;
+          --accent: #f59a2e;
+          --accent-ink: #1c1206;
+          --ok: #5cc47e;
+          --err: #ff8a80;
+          --chip-bg: #0d2136;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        }
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        font-family: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          linear-gradient(var(--bg-grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px),
+          linear-gradient(var(--bg-grid-strong) 1px, transparent 1px),
+          linear-gradient(90deg, var(--bg-grid-strong) 1px, transparent 1px),
+          var(--bg);
+        background-size: 22px 22px, 22px 22px, 110px 110px, 110px 110px;
+        line-height: 1.5;
+      }
+      .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+      .wrap { max-width: 1120px; margin: 0 auto; padding: 20px 16px 64px; }
+
+      /* ---------- Header ---------- */
+      header.top { padding: 14px 0 6px; }
+      .shop-line {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+        font-family: "IBM Plex Mono", monospace; font-size: 0.82rem; letter-spacing: 0.04em;
+        color: var(--blue); text-transform: uppercase;
+      }
+      .shop-line .dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; flex: none; }
+      h1 {
+        font-size: clamp(1.9rem, 5.2vw, 3rem); line-height: 1.08; margin: 12px 0 10px;
+        font-weight: 800; letter-spacing: -0.01em; max-width: 16ch;
+      }
+      h1 .hl { color: var(--blue); }
+      .lede { color: var(--ink-soft); max-width: 62ch; margin: 0 0 18px; font-size: 1.02rem; }
+      .meta-row { display: flex; flex-wrap: wrap; gap: 8px; }
+      .meta-chip {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+        padding: 6px 13px; font-size: 0.86rem; color: var(--ink-soft);
+      }
+      .meta-chip svg { flex: none; }
+
+      /* ---------- Layout ---------- */
+      .layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 22px; margin-top: 26px; align-items: start; }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+      section.card {
+        background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+        padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow);
+      }
+      .step-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+      .step-no {
+        font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 0.8rem;
+        color: var(--accent-ink); background: var(--accent); border-radius: 6px; padding: 3px 9px; flex: none;
+      }
+      h2 { font-size: 1.22rem; margin: 0; font-weight: 700; }
+      .step-sub { color: var(--ink-soft); font-size: 0.92rem; margin: 2px 0 16px 0; }
+
+      /* ---------- Service cards ---------- */
+      .svc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      @media (max-width: 560px) { .svc-grid { grid-template-columns: 1fr; } }
+      .svc {
+        position: relative; text-align: left; cursor: pointer; width: 100%;
+        background: var(--chip-bg); border: 1.5px solid var(--line); border-radius: var(--radius);
+        padding: 14px 14px 12px; font: inherit; color: inherit;
+        display: flex; gap: 12px; align-items: flex-start;
+        transition: border-color 0.15s ease, background 0.15s ease;
+      }
+      .svc:hover { border-color: var(--line-strong); }
+      .svc[aria-checked="true"] { border-color: var(--blue); background: var(--surface-2); }
+      .svc[aria-checked="true"]::after {
+        content: "✓"; position: absolute; top: 10px; right: 12px;
+        color: var(--blue); font-weight: 800; font-size: 1rem;
+      }
+      .svc .thumb { flex: none; width: 58px; height: 46px; }
+      .svc h3 { margin: 0 0 3px; font-size: 1rem; font-weight: 700; }
+      .svc p { margin: 0; font-size: 0.85rem; color: var(--ink-soft); line-height: 1.4; }
+      .svc .tag {
+        display: inline-block; margin-top: 7px; font-family: "IBM Plex Mono", monospace;
+        font-size: 0.68rem; letter-spacing: 0.05em; text-transform: uppercase;
+        border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px; color: var(--blue);
+      }
+
+      /* ---------- Fields ---------- */
+      .fields { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+      .fields .full { grid-column: 1 / -1; }
+      @media (max-width: 560px) { .fields { grid-template-columns: 1fr; } }
+      label.f { display: block; }
+      label.f > span { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+      label.f > span .opt { color: var(--ink-soft); font-weight: 500; font-size: 0.8rem; }
+      input[type="text"], input[type="tel"], input[type="number"], select, textarea {
+        width: 100%; font: inherit; color: var(--ink);
+        background: var(--chip-bg); border: 1.5px solid var(--line); border-radius: 8px;
+        padding: 9px 12px;
+      }
+      textarea { min-height: 84px; resize: vertical; }
+      input:focus, select:focus, textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; border-color: var(--blue); }
+      .hint { font-size: 0.8rem; color: var(--ink-soft); margin-top: 5px; }
+      .err-text { font-size: 0.82rem; color: var(--err); margin-top: 5px; display: none; }
+      .invalid input { border-color: var(--err); }
+      .invalid .err-text { display: block; }
+
+      .dims { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: end; }
+      .dims .x { font-family: "IBM Plex Mono", monospace; color: var(--ink-soft); padding-bottom: 10px; }
+      .area-out {
+        margin-top: 10px; font-family: "IBM Plex Mono", monospace; font-size: 0.86rem;
+        background: var(--surface-2); border: 1px dashed var(--line-strong); border-radius: 8px; padding: 8px 12px;
+      }
+
+      /* segmented control */
+      .seg { display: flex; flex-wrap: wrap; gap: 8px; }
+      .seg button {
+        font: inherit; cursor: pointer; color: var(--ink);
+        background: var(--chip-bg); border: 1.5px solid var(--line); border-radius: 8px;
+        padding: 8px 14px; min-height: 2.5rem; font-weight: 600; font-size: 0.92rem;
+      }
+      .seg button[aria-pressed="true"] { background: var(--blue); border-color: var(--blue); color: #fff; }
+      @media (prefers-color-scheme: dark) { .seg button[aria-pressed="true"] { color: #08192c; } }
+
+      /* stepper */
+      .stepper { display: inline-flex; align-items: center; gap: 0; border: 1.5px solid var(--line); border-radius: 8px; overflow: hidden; }
+      .stepper button {
+        width: 44px; min-height: 2.6rem; font-size: 1.15rem; font-weight: 700; cursor: pointer;
+        background: var(--surface-2); color: var(--ink); border: 0; font-family: inherit;
+      }
+      .stepper output { min-width: 52px; text-align: center; font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 1rem; }
+
+      /* add-ons */
+      .addon-list { display: grid; gap: 10px; }
+      .addon {
+        display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+        border: 1.5px solid var(--line); border-radius: var(--radius); padding: 12px 14px;
+        background: var(--chip-bg); min-height: 3rem;
+      }
+      .addon input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--blue); flex: none; }
+      .addon b { display: block; font-size: 0.96rem; }
+      .addon small { color: var(--ink-soft); font-size: 0.84rem; }
+      .addon:has(input:checked) { border-color: var(--blue); background: var(--surface-2); }
+
+      /* ---------- Summary panel ---------- */
+      aside.summary {
+        position: sticky; top: 16px;
+        background: var(--blue-deep); color: #eef5fc; border-radius: var(--radius);
+        padding: 20px; box-shadow: var(--shadow);
+        background-image:
+          linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 18px 18px;
+      }
+      @media (prefers-color-scheme: dark) {
+        aside.summary { background-color: #0d2136; color: var(--ink); border: 1px solid var(--line-strong); }
+      }
+      @media (max-width: 900px) { aside.summary { position: static; } }
+      aside.summary h2 { font-size: 1.1rem; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+      .ref { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; opacity: 0.85; font-weight: 500; }
+      .sum-list { list-style: none; margin: 14px 0; padding: 0; display: grid; gap: 0; }
+      .sum-list li {
+        display: flex; justify-content: space-between; gap: 14px;
+        padding: 8px 0; border-bottom: 1px dashed rgba(160, 195, 230, 0.35); font-size: 0.92rem;
+      }
+      .sum-list li span:first-child { opacity: 0.78; flex: none; }
+      .sum-list li span:last-child { font-weight: 600; text-align: right; }
+      .sum-note { font-size: 0.84rem; opacity: 0.85; margin: 10px 0 16px; }
+      .btn {
+        display: flex; align-items: center; justify-content: center; gap: 9px;
+        width: 100%; min-height: 3.1rem; border-radius: 9px; border: 0; cursor: pointer;
+        font: inherit; font-weight: 700; font-size: 1rem; text-decoration: none; text-align: center;
+        padding: 10px 14px;
+      }
+      .btn-wa { background: #22a95c; color: #fff; }
+      .btn-wa:hover { background: #1c9150; }
+      .btn-ghost {
+        background: transparent; color: inherit; border: 1.5px solid rgba(170, 205, 240, 0.55);
+        margin-top: 10px; min-height: 2.7rem; font-size: 0.94rem;
+      }
+      .btn[aria-disabled="true"] { opacity: 0.45; pointer-events: none; }
+      .copied { font-size: 0.85rem; margin-top: 10px; min-height: 1.2em; text-align: center; color: #8fe3ae; }
+      @media (prefers-color-scheme: dark) { .copied { color: var(--ok); } }
+
+      /* ---------- Contacts / footer ---------- */
+      .contacts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+      @media (max-width: 640px) { .contacts { grid-template-columns: 1fr; } }
+      .contact {
+        background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+        padding: 16px 18px; box-shadow: var(--shadow);
+      }
+      .contact h3 { margin: 0 0 2px; font-size: 1.05rem; }
+      .contact .num { font-family: "IBM Plex Mono", monospace; font-size: 1.02rem; color: var(--blue); font-weight: 600; }
+      .contact .role { color: var(--ink-soft); font-size: 0.86rem; margin: 0 0 12px; }
+      .contact .row { display: flex; gap: 8px; flex-wrap: wrap; }
+      .mini-btn {
+        display: inline-flex; align-items: center; gap: 7px; min-height: 2.5rem;
+        padding: 8px 14px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+        text-decoration: none; border: 1.5px solid var(--line-strong); color: var(--ink); background: var(--chip-bg);
+      }
+      .mini-btn.wa { background: #22a95c; border-color: #22a95c; color: #fff; }
+      footer { margin-top: 30px; color: var(--ink-soft); font-size: 0.88rem; text-align: center; }
+      footer .addr { font-weight: 600; color: var(--ink); }
+
+      .plan-fig { margin: 0 0 20px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+      .plan-fig svg { display: block; width: 100%; height: auto; }
+      .plan-fig figcaption { padding: 9px 14px; font-size: 0.84rem; color: var(--ink-soft); border-top: 1px solid var(--line); font-family: "IBM Plex Mono", monospace; }
+
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <div class="shop-line"><span class="dot"></span> H.I Mobile Center · Shakargarh <span class="dot"></span> AutoCAD 2D &amp; 3D Services</div>
+        <h1>Ghar ka <span class="hl">naqsha</span> aur <span class="hl">3D design</span> — order yahin karein</h1>
+        <p class="lede">Service chunein, plot ki details likhein, aur apna order seedha dukaan ke WhatsApp par bhej dein. 2D floor plan ho ya 3D elevation — kaam professional AutoCAD drawing mein milega.</p>
+        <div class="meta-row">
+          <span class="meta-chip">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            Timing: 3 PM – 9 PM
+          </span>
+          <span class="meta-chip">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            Delivery time: 2 days
+          </span>
+          <span class="meta-chip">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-5.6-7-11a7 7 0 1 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+            Mohalla Rasheed Pura Janubi, Shakar Garh
+          </span>
+          <span class="meta-chip">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v11H4z"/><path d="M2 19h20"/></svg>
+            DWG + PDF file delivery
+          </span>
+        </div>
+      </header>
+
+      <div class="layout">
+        <form id="orderForm" novalidate>
+          <!-- STEP 1 : SERVICE -->
+          <section class="card" aria-labelledby="h-svc">
+            <div class="step-head"><span class="step-no">STEP 1</span><h2 id="h-svc">Service chunein</h2></div>
+            <p class="step-sub">Jo drawing chahiye, us par tap karein. Ek service select karna zaroori hai.</p>
+            <div class="svc-grid" role="radiogroup" aria-label="AutoCAD service">
+              <button type="button" class="svc" role="radio" aria-checked="true" data-service="2D Floor Plan (Naqsha)">
+                <svg class="thumb" viewBox="0 0 58 46" fill="none" stroke="var(--blue)" stroke-width="1.6" aria-hidden="true">
+                  <rect x="3" y="3" width="52" height="40"/>
+                  <path d="M3 24h24M27 3v40M27 24h28M40 24v19"/>
+                  <path d="M12 24a6 6 0 0 1 6 6" stroke-dasharray="2.5 2.5"/>
+                </svg>
+                <span><h3>2D Floor Plan</h3><p>Ghar ka naqsha — kamray, kitchen, bath aur sehan ki mukammal planning.</p><span class="tag">Sab se zyada order</span></span>
+              </button>
+              <button type="button" class="svc" role="radio" aria-checked="false" data-service="2D Mukammal Drawing Set">
+                <svg class="thumb" viewBox="0 0 58 46" fill="none" stroke="var(--blue)" stroke-width="1.6" aria-hidden="true">
+                  <rect x="6" y="6" width="40" height="30"/>
+                  <rect x="12" y="12" width="40" height="30" fill="var(--surface)"/>
+                  <path d="M18 22h20M18 29h14M18 36h20"/>
+                </svg>
+                <span><h3>2D Mukammal Set</h3><p>Floor plan + front elevation + section — tameer ke liye poora set.</p><span class="tag">Plan + Elevation + Section</span></span>
+              </button>
+              <button type="button" class="svc" role="radio" aria-checked="false" data-service="3D Elevation (Front Design)">
+                <svg class="thumb" viewBox="0 0 58 46" fill="none" stroke="var(--blue)" stroke-width="1.6" aria-hidden="true">
+                  <path d="M8 42V18l21-12 21 12v24"/>
+                  <path d="M8 18h42M29 6v36" stroke-dasharray="3 3"/>
+                  <rect x="24" y="30" width="10" height="12"/>
+                  <rect x="13" y="24" width="8" height="7"/><rect x="37" y="24" width="8" height="7"/>
+                </svg>
+                <span><h3>3D Elevation</h3><p>Ghar ka front kaisa lagega — banane se pehle 3D mein dekh lein.</p><span class="tag">Front Design</span></span>
+              </button>
+              <button type="button" class="svc" role="radio" aria-checked="false" data-service="3D Interior Design">
+                <svg class="thumb" viewBox="0 0 58 46" fill="none" stroke="var(--blue)" stroke-width="1.6" aria-hidden="true">
+                  <path d="M6 10l23 9 23-9M6 10v26l23 9 23-9V10M29 19v26"/>
+                  <rect x="15" y="27" width="10" height="8"/>
+                </svg>
+                <span><h3>3D Interior</h3><p>Kamray, kitchen aur TV lounge ka andar ka 3D design.</p><span class="tag">Interior Views</span></span>
+              </button>
+              <button type="button" class="svc" role="radio" aria-checked="false" data-service="2D + 3D Combo Package">
+                <svg class="thumb" viewBox="0 0 58 46" fill="none" stroke="var(--blue)" stroke-width="1.6" aria-hidden="true">
+                  <rect x="3" y="8" width="30" height="30"/>
+                  <path d="M3 23h15M18 8v30"/>
+                  <path d="M36 38V20l10-6 10 6v18"/>
+                  <path d="M46 14v24" stroke-dasharray="3 3"/>
+                </svg>
+                <span><h3>2D + 3D Combo</h3><p>Naqsha aur 3D front design ek saath — mukammal package.</p><span class="tag">Best Value</span></span>
+              </button>
+              <button type="button" class="svc" role="radio" aria-checked="false" data-service="Revision / Tabdeeli (Purana Naqsha)">
+                <svg class="thumb" viewBox="0 0 58 46" fill="none" stroke="var(--blue)" stroke-width="1.6" aria-hidden="true">
+                  <rect x="5" y="5" width="48" height="36" stroke-dasharray="4 3"/>
+                  <path d="M16 30l8-12 6 7 6-9 6 8" />
+                  <path d="M40 12l6 6M46 12l-6 6" stroke="var(--accent)"/>
+                </svg>
+                <span><h3>Revision / Tabdeeli</h3><p>Purane naqshe mein tabdeeli ya kisi drawing ki correction.</p><span class="tag">Existing Drawing</span></span>
+              </button>
+            </div>
+          </section>
+
+          <!-- STEP 2 : PROJECT DETAILS -->
+          <section class="card" aria-labelledby="h-proj">
+            <div class="step-head"><span class="step-no">STEP 2</span><h2 id="h-proj">Project ki details</h2></div>
+            <p class="step-sub">Plot ka size jitna durust likhein ge, naqsha utna hi behtar bane ga.</p>
+
+            <div class="fields">
+              <label class="f">
+                <span>Project ki qisam</span>
+                <select id="projType">
+                  <option value="Rahaishi Ghar">Rahaishi Ghar</option>
+                  <option value="Dukaan / Shop">Dukaan / Shop</option>
+                  <option value="Plaza / Commercial">Plaza / Commercial</option>
+                  <option value="Masjid">Masjid</option>
+                  <option value="School / Academy">School / Academy</option>
+                  <option value="Godam / Factory">Godam / Factory</option>
+                  <option value="Deegar">Deegar</option>
+                </select>
+              </label>
+              <label class="f">
+                <span>Plot size (Marla / Kanal)</span>
+                <input type="text" id="plotSize" placeholder="Misal: 5 Marla, 10 Marla, 1 Kanal" autocomplete="off" />
+              </label>
+              <div class="f full">
+                <span style="display:block;font-weight:600;font-size:0.9rem;margin-bottom:6px;">Plot ki lambai × chorai <span class="opt" style="color:var(--ink-soft);font-weight:500;font-size:0.8rem;">(feet mein, agar maloom hai)</span></span>
+                <div class="dims">
+                  <input type="number" id="dimL" min="1" inputmode="decimal" placeholder="Lambai — 50 ft" aria-label="Lambai feet mein" />
+                  <span class="x">×</span>
+                  <input type="number" id="dimW" min="1" inputmode="decimal" placeholder="Chorai — 30 ft" aria-label="Chorai feet mein" />
+                </div>
+                <div class="area-out" id="areaOut">Total area: — sq ft</div>
+              </div>
+              <div class="f">
+                <span style="display:block;font-weight:600;font-size:0.9rem;margin-bottom:6px;">Manzilein (Floors)</span>
+                <div class="stepper">
+                  <button type="button" id="floorMinus" aria-label="Manzil kam karein">−</button>
+                  <output id="floorOut" aria-live="polite">1</output>
+                  <button type="button" id="floorPlus" aria-label="Manzil barhayein">+</button>
+                </div>
+              </div>
+              <div class="f">
+                <span style="display:block;font-weight:600;font-size:0.9rem;margin-bottom:6px;">Kamray (Bedrooms)</span>
+                <div class="stepper">
+                  <button type="button" id="roomMinus" aria-label="Kamra kam karein">−</button>
+                  <output id="roomOut" aria-live="polite">3</output>
+                  <button type="button" id="roomPlus" aria-label="Kamra barhayein">+</button>
+                </div>
+              </div>
+              <div class="f full">
+                <span style="display:block;font-weight:600;font-size:0.9rem;margin-bottom:6px;">Delivery ki jaldi</span>
+                <div class="seg" role="group" aria-label="Delivery ki jaldi">
+                  <button type="button" data-speed="Normal" aria-pressed="true">Normal</button>
+                  <button type="button" data-speed="Jaldi (Urgent)" aria-pressed="false">Jaldi — Urgent</button>
+                </div>
+                <p class="hint">Delivery time: <strong>2 days</strong> — order ke 2 din ke andar drawing mil jaye gi.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- STEP 3 : ADD-ONS -->
+          <section class="card" aria-labelledby="h-add">
+            <div class="step-head"><span class="step-no">STEP 3</span><h2 id="h-add">Extra drawings</h2></div>
+            <p class="step-sub">Jo extra chahiye, tick kar dein — zaroori nahi, sirf apni marzi se.</p>
+            <div class="addon-list">
+              <label class="addon"><input type="checkbox" class="addonChk" value="Structural Drawing (Foundation / Beam / Column)" />
+                <span><b>Structural Drawing</b><small>Foundation, beam aur column ki drawing — mazboot tameer ke liye.</small></span></label>
+              <label class="addon"><input type="checkbox" class="addonChk" value="Electrical Layout" />
+                <span><b>Electrical Layout</b><small>Switch, socket, fan aur light points ka plan.</small></span></label>
+              <label class="addon"><input type="checkbox" class="addonChk" value="Plumbing / Sanitary Layout" />
+                <span><b>Plumbing Layout</b><small>Paani aur sewerage lines ka plan.</small></span></label>
+              <label class="addon"><input type="checkbox" class="addonChk" value="Tameer ka Kharcha Estimate" />
+                <span><b>Tameer ka Estimate</b><small>Material aur takreebi kharche ka andaza sheet.</small></span></label>
+              <label class="addon"><input type="checkbox" class="addonChk" value="Print Copies (A3 / A1)" />
+                <span><b>Print Copies</b><small>Barre size (A3 / A1) print — site par le jaane ke liye.</small></span></label>
+            </div>
+          </section>
+
+          <!-- STEP 4 : CUSTOMER -->
+          <section class="card" aria-labelledby="h-cust">
+            <div class="step-head"><span class="step-no">STEP 4</span><h2 id="h-cust">Apni maloomat</h2></div>
+            <p class="step-sub">Naam aur WhatsApp number zaroori hai — drawing isi number par bheji jaye gi.</p>
+            <div class="fields">
+              <div class="f" id="nameWrap">
+                <label class="f" style="display:block;">
+                  <span>Apna naam *</span>
+                  <input type="text" id="custName" placeholder="Misal: Muhammad Ahmad" autocomplete="name" />
+                </label>
+                <p class="err-text">Naam likhna zaroori hai.</p>
+              </div>
+              <div class="f" id="phoneWrap">
+                <label class="f" style="display:block;">
+                  <span>WhatsApp number *</span>
+                  <input type="tel" id="custPhone" placeholder="03XX-XXXXXXX" autocomplete="tel" inputmode="tel" />
+                </label>
+                <p class="err-text">Durust mobile number likhein (kam az kam 10 hindsay).</p>
+              </div>
+              <label class="f">
+                <span>Shehar / Ilaqa <span class="opt">(optional)</span></span>
+                <input type="text" id="custCity" placeholder="Misal: Shakargarh" autocomplete="address-level2" />
+              </label>
+              <label class="f">
+                <span>Plot ka pata <span class="opt">(optional)</span></span>
+                <input type="text" id="custAddr" placeholder="Mohalla / gali, agar dena chahein" />
+              </label>
+              <label class="f full">
+                <span>Koi khaas baat? <span class="opt">(optional)</span></span>
+                <textarea id="custNotes" placeholder="Misal: Neeche dukaan, upar ghar chahiye. Vaastu / purab rukh, car porch lazmi, mumty bhi bana dein..."></textarea>
+              </label>
+            </div>
+          </section>
+
+          <figure class="plan-fig">
+            <svg viewBox="0 0 640 300" role="img" aria-label="Ek namunay ke 2D floor plan ki drawing" fill="none" stroke="var(--blue)" stroke-width="2">
+              <rect x="30" y="30" width="580" height="240" stroke-width="3"/>
+              <path d="M30 170h250M280 30v240M280 130h160M440 30v140M440 170h170M280 210h330"/>
+              <path d="M90 170a34 34 0 0 1 34 34" stroke-dasharray="4 4" stroke-width="1.4"/>
+              <path d="M330 130a30 30 0 0 1 30 30" stroke-dasharray="4 4" stroke-width="1.4"/>
+              <rect x="470" y="52" width="52" height="34" stroke-width="1.4"/><path d="M470 69h52" stroke-width="1.2"/>
+              <rect x="470" y="196" width="52" height="34" stroke-width="1.4"/><path d="M470 213h52" stroke-width="1.2"/>
+              <g font-family="IBM Plex Mono, monospace" font-size="14" fill="var(--ink-soft)" stroke="none">
+                <text x="110" y="105">BEDROOM</text>
+                <text x="310" y="85">LIVING</text>
+                <text x="478" y="105">KITCHEN</text>
+                <text x="95" y="228">DRAWING</text>
+                <text x="330" y="245">COURTYARD</text>
+                <text x="480" y="228" font-size="12">BATH</text>
+              </g>
+              <g stroke="var(--accent)" stroke-width="1.4">
+                <path d="M30 288h580"/><path d="M30 282v12M610 282v12"/>
+              </g>
+              <text x="292" y="284" font-family="IBM Plex Mono, monospace" font-size="13" fill="var(--accent)" stroke="none">50'-0"</text>
+            </svg>
+            <figcaption>SAMPLE — 5 Marla ghar ka 2D floor plan (namuna)</figcaption>
+          </figure>
+        </form>
+
+        <!-- SUMMARY -->
+        <aside class="summary" aria-labelledby="h-sum">
+          <h2 id="h-sum">Order Summary <span class="ref mono" id="orderRef">Ref: CAD-0000</span></h2>
+          <ul class="sum-list" id="sumList"></ul>
+          <p class="sum-note">Delivery time: <strong>2 days</strong>. Rate order milte hi WhatsApp par confirm kar diya jaye ga. Payment aur file delivery (DWG / PDF) ki tafseel bhi wahin mile gi.</p>
+          <a class="btn btn-wa" id="waOrder" href="#" target="_blank" rel="noopener" aria-disabled="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.2 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.2-4.7-4.1-4.9-4.3-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5s.8 1.9.8 2c.1.1.1.3 0 .5-.3.6-.6.8-.4 1.1.7 1.2 1.6 2 2.8 2.6.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.4 0 .1 0 .7-.2 1.2z"/></svg>
+            WhatsApp par Order Bhejein
+          </a>
+          <button type="button" class="btn btn-ghost" id="copyBtn">Order Summary Copy Karein</button>
+          <p class="copied" id="copyMsg" role="status" aria-live="polite"></p>
+          <p class="sum-note" style="margin-bottom:0;">Order M. Qadeem ke number <span class="mono">0307-2595285</span> par jaye ga.</p>
+        </aside>
+      </div>
+
+      <!-- CONTACTS -->
+      <section aria-labelledby="h-contact" style="margin-top:6px;">
+        <div class="step-head" style="margin-bottom:14px;"><span class="step-no">RABTA</span><h2 id="h-contact">Dukaan se seedha rabta</h2></div>
+        <div class="contacts">
+          <div class="contact">
+            <h3>M. Qadeem</h3>
+            <p class="num">0307-2595285</p>
+            <p class="role">H.I Mobile Center — AutoCAD 2D &amp; 3D orders</p>
+            <div class="row">
+              <a class="mini-btn" href="tel:+923072595285">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8.1 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.6 2z"/></svg>
+                Call Karein</a>
+              <a class="mini-btn wa" href="https://wa.me/923072595285" target="_blank" rel="noopener">WhatsApp</a>
+            </div>
+          </div>
+          <div class="contact">
+            <h3>Zain Ali</h3>
+            <p class="num">0344-8445667</p>
+            <p class="role">H.I Mobile Center — doosra rabta number</p>
+            <div class="row">
+              <a class="mini-btn" href="tel:+923448445667">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.4 2.1L8.1 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.6 2z"/></svg>
+                Call Karein</a>
+              <a class="mini-btn wa" href="https://wa.me/923448445667" target="_blank" rel="noopener">WhatsApp</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <p class="addr">H.I Mobile Center — Mohalla Rasheed Pura Janubi, Shakar Garh</p>
+        <p>Mobiles (OPPO · iPhone · TECNO · vivo), accessories, Easypaisa / JazzCash aur AutoCAD 2D &amp; 3D services — timing 3 PM se 9 PM tak.</p>
+      </footer>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var SHOP_WA = "923072595285"; // M. Qadeem — H.I Mobile Center
+
+        var state = {
+          service: "2D Floor Plan (Naqsha)",
+          floors: 1,
+          rooms: 3,
+          speed: "Normal"
+        };
+
+        // Order reference (session-only)
+        var ref = "CAD-" + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById("orderRef").textContent = "Ref: " + ref;
+
+        var $ = function (id) { return document.getElementById(id); };
+
+        /* ----- Service selection ----- */
+        var svcBtns = Array.prototype.slice.call(document.querySelectorAll(".svc"));
+        svcBtns.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            svcBtns.forEach(function (b) { b.setAttribute("aria-checked", "false"); });
+            btn.setAttribute("aria-checked", "true");
+            state.service = btn.getAttribute("data-service");
+            render();
+          });
+        });
+
+        /* ----- Steppers ----- */
+        function stepper(outId, minusId, plusId, key, min, max) {
+          $(minusId).addEventListener("click", function () {
+            if (state[key] > min) { state[key]--; $(outId).textContent = state[key]; render(); }
+          });
+          $(plusId).addEventListener("click", function () {
+            if (state[key] < max) { state[key]++; $(outId).textContent = state[key]; render(); }
+          });
+        }
+        stepper("floorOut", "floorMinus", "floorPlus", "floors", 1, 6);
+        stepper("roomOut", "roomMinus", "roomPlus", "rooms", 0, 20);
+
+        /* ----- Speed segmented ----- */
+        var segBtns = Array.prototype.slice.call(document.querySelectorAll(".seg button"));
+        segBtns.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            segBtns.forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
+            btn.setAttribute("aria-pressed", "true");
+            state.speed = btn.getAttribute("data-speed");
+            render();
+          });
+        });
+
+        /* ----- Area calc ----- */
+        function areaText() {
+          var l = parseFloat($("dimL").value), w = parseFloat($("dimW").value);
+          if (l > 0 && w > 0) {
+            var sqft = l * w;
+            var marla = sqft / 272.25;
+            return Math.round(sqft).toLocaleString("en-PK") + " sq ft  ·  ≈ " +
+              (marla >= 20 ? (marla / 20).toFixed(2).replace(/\.?0+$/, "") + " Kanal" : marla.toFixed(1) + " Marla");
+          }
+          return null;
+        }
+        function updateArea() {
+          var a = areaText();
+          $("areaOut").textContent = "Total area: " + (a ? a : "— sq ft");
+        }
+        $("dimL").addEventListener("input", function () { updateArea(); render(); });
+        $("dimW").addEventListener("input", function () { updateArea(); render(); });
+
+        /* ----- Gather order ----- */
+        function gather() {
+          var addons = Array.prototype.slice.call(document.querySelectorAll(".addonChk:checked"))
+            .map(function (c) { return c.value; });
+          var dims = "";
+          var l = $("dimL").value.trim(), w = $("dimW").value.trim();
+          if (l && w) { dims = l + " × " + w + " ft (" + (areaText() || "") + ")"; }
+          else if (l || w) { dims = (l || w) + " ft"; }
+          return {
+            service: state.service,
+            projType: $("projType").value,
+            plotSize: $("plotSize").value.trim(),
+            dims: dims,
+            floors: state.floors,
+            rooms: state.rooms,
+            speed: state.speed,
+            addons: addons,
+            name: $("custName").value.trim(),
+            phone: $("custPhone").value.trim(),
+            city: $("custCity").value.trim(),
+            addr: $("custAddr").value.trim(),
+            notes: $("custNotes").value.trim()
+          };
+        }
+
+        function validPhone(p) {
+          var digits = p.replace(/\D/g, "");
+          return digits.length >= 10 && digits.length <= 13;
+        }
+
+        function summaryRows(o) {
+          var rows = [
+            ["Service", o.service],
+            ["Project", o.projType],
+            ["Plot size", o.plotSize || "—"],
+            ["Lambai × Chorai", o.dims || "—"],
+            ["Manzilein", String(o.floors)],
+            ["Kamray", String(o.rooms)],
+            ["Delivery", o.speed],
+            ["Delivery time", "2 days"],
+            ["Extra drawings", o.addons.length ? o.addons.length + " select" : "Koi nahi"],
+            ["Naam", o.name || "—"],
+            ["WhatsApp", o.phone || "—"]
+          ];
+          if (o.city) rows.push(["Shehar", o.city]);
+          return rows;
+        }
+
+        function messageText(o) {
+          var lines = [];
+          lines.push("*AutoCAD Order — H.I Mobile Center*");
+          lines.push("Ref: " + ref);
+          lines.push("------------------------------");
+          lines.push("Service: " + o.service);
+          lines.push("Project: " + o.projType);
+          if (o.plotSize) lines.push("Plot size: " + o.plotSize);
+          if (o.dims) lines.push("Lambai x Chorai: " + o.dims);
+          lines.push("Manzilein: " + o.floors);
+          lines.push("Kamray: " + o.rooms);
+          lines.push("Delivery: " + o.speed);
+          lines.push("Delivery time: 2 days");
+          if (o.addons.length) lines.push("Extra: " + o.addons.join(", "));
+          lines.push("------------------------------");
+          lines.push("Naam: " + o.name);
+          lines.push("WhatsApp: " + o.phone);
+          if (o.city) lines.push("Shehar: " + o.city);
+          if (o.addr) lines.push("Plot ka pata: " + o.addr);
+          if (o.notes) lines.push("Note: " + o.notes);
+          return lines.join("\n");
+        }
+
+        function render() {
+          var o = gather();
+          var html = summaryRows(o).map(function (r) {
+            return "<li><span>" + r[0] + "</span><span>" + escapeHtml(r[1]) + "</span></li>";
+          }).join("");
+          $("sumList").innerHTML = html;
+
+          var ok = o.name.length >= 2 && validPhone(o.phone);
+          var wa = $("waOrder");
+          if (ok) {
+            wa.setAttribute("href", "https://wa.me/" + SHOP_WA + "?text=" + encodeURIComponent(messageText(o)));
+            wa.setAttribute("aria-disabled", "false");
+          } else {
+            wa.setAttribute("href", "#");
+            wa.setAttribute("aria-disabled", "true");
+          }
+          return o;
+        }
+
+        function escapeHtml(s) {
+          return String(s).replace(/[&<>"']/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+          });
+        }
+
+        /* ----- Validation display ----- */
+        function checkField(wrapId, ok) {
+          $(wrapId).classList.toggle("invalid", !ok);
+          return ok;
+        }
+        $("custName").addEventListener("blur", function () { checkField("nameWrap", $("custName").value.trim().length >= 2); });
+        $("custPhone").addEventListener("blur", function () { checkField("phoneWrap", validPhone($("custPhone").value)); });
+
+        $("waOrder").addEventListener("click", function (e) {
+          var o = gather();
+          var okName = checkField("nameWrap", o.name.length >= 2);
+          var okPhone = checkField("phoneWrap", validPhone(o.phone));
+          if (!okName || !okPhone) {
+            e.preventDefault();
+            document.getElementById("h-cust").scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        });
+
+        /* ----- Live updates ----- */
+        ["projType", "plotSize", "custName", "custPhone", "custCity", "custAddr", "custNotes"].forEach(function (id) {
+          $(id).addEventListener("input", render);
+          $(id).addEventListener("change", render);
+        });
+        document.querySelectorAll(".addonChk").forEach(function (c) { c.addEventListener("change", render); });
+
+        /* ----- Copy summary ----- */
+        $("copyBtn").addEventListener("click", function () {
+          var text = messageText(gather());
+          var done = function () { $("copyMsg").textContent = "Summary copy ho gaya ✓"; };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+          } else { fallbackCopy(text); done(); }
+          setTimeout(function () { $("copyMsg").textContent = ""; }, 3000);
+        });
+        function fallbackCopy(text) {
+          var ta = document.createElement("textarea");
+          ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+          document.body.appendChild(ta); ta.select();
+          try { document.execCommand("copy"); } catch (e) {}
+          document.body.removeChild(ta);
+        }
+
+        updateArea();
+        render();
+      })();
+    </script>
+  </body>
+</html>
